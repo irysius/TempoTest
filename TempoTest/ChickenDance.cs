@@ -10,7 +10,7 @@ namespace TempoTest
 	{
 		public ChickenDance()
 		{
- 			// Setting up the song
+			// Setting up the song
 			MeasureWaitUntil intro = new MeasureWaitUntil(3380);
 			intro.Name = "Intro";
 			intro.OnMeasureBegin += onVerseBegin;
