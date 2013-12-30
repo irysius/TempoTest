@@ -8,15 +8,20 @@ namespace TempoTest
 {
 	public class Verse : IMeasure
 	{
-		string name = "";
-		public Verse(string name)
-		{
-			this.name = name;
-		}
 		public Verse() { }
-		public string Name
+		public string Name { get; set; }
+		double targetMS = 0;
+		public double TargetMS
 		{
-			get { return name; }
+			get { return targetMS; }
+			set
+			{
+				foreach (var m in measures)
+				{
+					m.TargetMS = value;
+				}
+				targetMS = value;
+			}
 		}
 
 		List<IMeasure> measures = new List<IMeasure>();
@@ -27,7 +32,7 @@ namespace TempoTest
 		int measure = 0;
 		bool hasBegun;
 
-		public bool Tick(bool suppressEvents = false)
+		public bool Tick(double elapsed, double total, bool suppressEvents = false)
 		{
 			var isLastMeasure = false;
 			if (!hasBegun)
@@ -35,16 +40,16 @@ namespace TempoTest
 				if (!suppressEvents)
 					hasBegun = true;
 				if (OnVerseBegin != null && !suppressEvents)
-					OnVerseBegin.Invoke(this, name);
+					OnVerseBegin.Invoke(this, Name);
 			}
 
-			var result = measures[measure].Tick();
+			var result = measures[measure].Tick(elapsed, total, suppressEvents);
 			if (result) 
 			{
 				if (measure == measures.Count - 1)
 				{
 					if (OnVerseEnd != null && !suppressEvents)
-						OnVerseEnd.Invoke(this, name);
+						OnVerseEnd.Invoke(this, Name);
 					measure = 0;
 					isLastMeasure = true;
 					hasBegun = false;
@@ -55,20 +60,17 @@ namespace TempoTest
 
 			return isLastMeasure;
 		}
-		public void AddMeasures44(int count)
+
+		public void Reset()
 		{
-			for (int i = 0; i < count; ++i)
+			measure = 0;
+			hasBegun = false;
+			foreach (var m in measures)
 			{
-				measures.Add(new Measure44());
+				m.Reset();
 			}
 		}
-		public void AddMeasures24(int count)
-		{
-			for (int i = 0; i < count; ++i)
-			{
-				measures.Add(new Measure24());
-			}
-		}
+
 		public event EventHandler<string> OnVerseBegin;
 		public event EventHandler<string> OnVerseEnd;
 	}

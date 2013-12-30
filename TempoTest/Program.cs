@@ -14,12 +14,6 @@ namespace TempoTest
 		{
 			var midiFile = Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, @"..\..\..\", "chickendance-240.mid"));
 
-			var bpm = 240.0;
-
-			System.Timers.Timer timer = new System.Timers.Timer(60 * 1000 / bpm);
-			timer.AutoReset = true;
-			timer.Elapsed += timer_Elapsed;
-
 			player = new WMPLib.WindowsMediaPlayer();
 			player.uiMode = "invisible";
 
@@ -28,10 +22,10 @@ namespace TempoTest
 
 			WMPLib.IWMPMedia3 song = (WMPLib.IWMPMedia3)player.newMedia(midiFile);
 			player.currentMedia = song;
-			player.settings.volume = 10;
+			player.settings.volume = 20;
 
 			player.controls.play();
-			timer.Start();
+			player.PlayStateChange += player_PlayStateChange;
 
 			chickenDance = new ChickenDance();
 			chickenDance.OnDebugReceived += chickenDance_OnDebugReceived;
@@ -39,19 +33,24 @@ namespace TempoTest
 			Console.ReadKey();
 		}
 
+
+		static void player_PlayStateChange(int NewState)
+		{
+			if ((WMPLib.WMPPlayState)NewState == WMPLib.WMPPlayState.wmppsPlaying)
+				chickenDance.Play();
+		}
+
 		static void chickenDance_OnDebugReceived(object sender, string e)
 		{
-			Console.WriteLine(e);
+			if (e == "---")
+				Console.WriteLine(player.controls.currentPosition);
+			else
+				Console.WriteLine(e);
 		}
 
 		// WMPLib comes from COM in References.
 		static WMPLib.WindowsMediaPlayer player;
 		static ChickenDance chickenDance;
-
-		static void timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
-		{
-			chickenDance.Tick();
-		}
 	}
 }
 

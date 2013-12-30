@@ -8,91 +8,113 @@ namespace TempoTest
 {
 	public interface IMeasure
 	{
-		string Name { get; }
-		bool Tick(bool suppressEvents = false);
+		string Name { get; set; }
+		bool Tick(double elapsed, double total, bool suppressEvents = false);
+		void Reset();
+		double TargetMS { get; set; }
 	}
 
-	public class Measure44 : IMeasure
-	{
-		string name = "";
-		public Measure44(string name)
-		{
-			this.name = name;
-		}
-		public Measure44() { }
-		public string Name
-		{
-			get { return name; }
-		}
-		int beat = 0;
 
-		public bool Tick(bool suppressEvents = false)
+	public class MeasureWaitUntil : IMeasure
+	{
+		double targetTime = 0;
+		bool hasBegun;
+
+		public MeasureWaitUntil(double milliseconds) 
 		{
-			var isLastBeat = false;
-			beat++;
-			switch (beat)
+			this.targetTime = milliseconds;
+		}
+
+		public string Name { get; set; }
+		public double TargetMS { get; set; }
+		public double TargetTime
+		{
+			get { return targetTime; }
+		}
+		public bool Tick(double elapsed, double total, bool suppressEvents = false)
+		{
+			if (!hasBegun)
 			{
-				case 1: 
+				if (!suppressEvents)
+					hasBegun = true;
+				if (OnMeasureBegin != null && !suppressEvents)
+					OnMeasureBegin.Invoke(this, Name);
+			}
+			if (total >= targetTime)
+			{
+				if (OnMeasureEnd != null && !suppressEvents)
+					OnMeasureEnd.Invoke(this, Name);
+				return true;
+			}
+			return false;
+		}
+
+		public void Reset() 
+		{
+			hasBegun = false;
+		}
+
+		public event EventHandler<string> OnMeasureBegin;
+		public event EventHandler<string> OnMeasureEnd;
+	}
+
+	public class MeasureBeat : IMeasure
+	{
+		int beats;
+		int beatIndex = 0;
+		double currMS = 0;
+
+		public MeasureBeat(int beats) 
+		{
+			this.beats = beats;
+		}
+
+		public string Name { get; set; }
+		public double TargetMS { get; set; }
+		public int Beats
+		{
+			get { return beats; }
+		}
+
+		public bool Tick(double elapsed, double total, bool suppressEvents = false)
+		{
+			currMS += elapsed;
+			var isLastBeat = false;
+			if (currMS >= TargetMS)
+			{
+				currMS -= TargetMS;
+				beatIndex++;
+				if (beatIndex == 1)
+				{
 					if (OnFirstBeat != null && !suppressEvents)
-						OnFirstBeat.Invoke(this, name);
-					break;
-				case 2:
-					if (OnSecondBeat != null && !suppressEvents)
-						OnSecondBeat.Invoke(this, name);
-					break;
-				case 3:
-					if (OnThirdBeat != null && !suppressEvents)
-						OnThirdBeat.Invoke(this, name);
-					break;
-				default:
+						OnFirstBeat.Invoke(this, Name);
+				}
+				else if (beatIndex == beats)
+				{
 					if (OnLastBeat != null && !suppressEvents)
-						OnLastBeat.Invoke(this, name);
-					beat = 0;
+						OnLastBeat.Invoke(this, Name);
+					beatIndex = 0;
+					currMS = 0;
 					isLastBeat = true;
-					break;
+				}
+				else
+				{
+					if (OnMiddleBeats != null && !suppressEvents)
+						OnMiddleBeats.Invoke(this, Tuple.Create(beatIndex, Name));
+				}
 			}
 			return isLastBeat;
 		}
+
+		public void Reset()
+		{
+			beatIndex = 0;
+			currMS = 0;
+		}
+
 		public event EventHandler<string> OnFirstBeat;
-		public event EventHandler<string> OnSecondBeat;
-		public event EventHandler<string> OnThirdBeat;
+		public event EventHandler<Tuple<int, string>> OnMiddleBeats;
 		public event EventHandler<string> OnLastBeat;
 	}
 
-	public class Measure24 : IMeasure
-	{
-		string name = "";
-		public Measure24(string name)
-		{
-			this.name = name;
-		}
-		public Measure24() { }
-		public string Name
-		{
-			get { return name; }
-		}
-		int beat = 0;
-
-		public bool Tick(bool suppressEvents = false)
-		{
-			var isLastBeat = false;
-			beat++;
-			switch (beat)
-			{
-				case 1: 
-					if (OnFirstBeat != null && !suppressEvents)
-						OnFirstBeat.Invoke(this, name);
-					break;
-				default:
-					if (OnLastBeat != null && !suppressEvents)
-						OnLastBeat.Invoke(this, name);
-					beat = 0;
-					isLastBeat = true;
-					break;
-			}
-			return isLastBeat;
-		}
-		public event EventHandler<string> OnFirstBeat;
-		public event EventHandler<string> OnLastBeat;
-	}
 }

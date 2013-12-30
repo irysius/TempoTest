@@ -11,26 +11,29 @@ namespace TempoTest
 		public ChickenDance()
 		{
  			// Setting up the song
-			Verse intro = new Verse("Intro");
-			intro.OnVerseBegin += onVerseBegin;
-			intro.OnVerseEnd += onVerseEnd;
-			intro.AddMeasures24(1);
-			intro.AddMeasures44(3);
+			MeasureWaitUntil intro = new MeasureWaitUntil(3380);
+			intro.Name = "Intro";
+			intro.OnMeasureBegin += onVerseBegin;
+			intro.OnMeasureEnd += onVerseEnd;
 
 			Verse chickenDanceSection = new Verse();
-			var chickenBeak = new Measure44("Chicken Beak");
+			var chickenBeak = new MeasureBeat(4);
+			chickenBeak.Name = "Chicken Beak";
 			chickenBeak.OnFirstBeat += chickenBeak_OnFirstBeat;
 			chickenDanceSection.Measures.Add(chickenBeak);
 
-			var chickenWings = new Measure44("Chicken Wings");
+			var chickenWings = new MeasureBeat(4);
+			chickenWings.Name = "Chicken Wings";
 			chickenWings.OnFirstBeat += chickenWings_OnFirstBeat;
 			chickenDanceSection.Measures.Add(chickenWings);
 
-			var tailFeathers = new Measure44("Shake Your Tail Feathers");
+			var tailFeathers = new MeasureBeat(4);
+			tailFeathers.Name = "Shake Your Tail Feathers";
 			tailFeathers.OnFirstBeat += tailFeathers_OnFirstBeat;
 			chickenDanceSection.Measures.Add(tailFeathers);
 
-			var clap = new Measure44("Clap");
+			var clap = new MeasureBeat(4);
+			clap.Name = "Clap";
 			clap.OnFirstBeat += clap_OnFirstBeat;
 			chickenDanceSection.Measures.Add(clap);
 
@@ -42,37 +45,58 @@ namespace TempoTest
 			chickenDance.OnVerseBegin += chickenDance_OnVerseBegin;
 			chickenDance.OnVerseEnd += chickenDance_OnVerseEnd;
 
-			Verse interlude = new Verse("Interlude");
-			interlude.OnVerseBegin += onVerseBegin;
-			interlude.OnVerseEnd += onVerseEnd;
-			interlude.AddMeasures44(16);
+			MeasureWaitUntil interlude1 = new MeasureWaitUntil(36650);
+			interlude1.Name = "Interlude1";
+			interlude1.OnMeasureBegin += onVerseBegin;
+			interlude1.OnMeasureEnd += onVerseEnd;
 
-			Verse outro = new Verse("Outro");
+			MeasureWaitUntil interlude2 = new MeasureWaitUntil(69900);
+			interlude2.Name = "Interlude2";
+			interlude2.OnMeasureBegin += onVerseBegin;
+			interlude2.OnMeasureEnd += onVerseEnd;
+
+			MeasureWaitUntil interlude3 = new MeasureWaitUntil(102750);
+			interlude3.Name = "Interlude3";
+			interlude3.OnMeasureBegin += onVerseBegin;
+			interlude3.OnMeasureEnd += onVerseEnd;
+
+			MeasureWaitUntil interlude4 = new MeasureWaitUntil(136020);
+			interlude4.Name = "Interlude4";
+			interlude4.OnMeasureBegin += onVerseBegin;
+			interlude4.OnMeasureEnd += onVerseEnd;
+
+			Verse outro = new Verse();
+			outro.Name = "Outro";
 			outro.OnVerseBegin += onVerseBegin;
 			outro.OnVerseEnd += onVerseEnd;
-			outro.AddMeasures44(2);
+			outro.Measures.Add(new MeasureBeat(10));
 
 			// Setting up the song
-			song = new Song("Chicken Dance");
+			song = new Song(240);
+			song.Name = "Chicken Dance";
 			song.Verses.Add(intro);
-			for (int i = 0; i < 4; ++i)
-			{
-				song.Verses.Add(chickenDance);
-				song.Verses.Add(interlude);
-			}
+
+			song.Verses.Add(chickenDance);
+			song.Verses.Add(interlude1);
+
+			song.Verses.Add(chickenDance);
+			song.Verses.Add(interlude2);
+
+			song.Verses.Add(chickenDance);
+			song.Verses.Add(interlude3);
+
+			song.Verses.Add(chickenDance);
+			song.Verses.Add(interlude4);
+
 			song.Verses.Add(outro);
 		}
 
-
 		Song song;
-		bool songEnded;
 		DateTime begin;
-		
 
-		public void Tick()
+		public void Play()
 		{
-			if (songEnded) return;
-			songEnded = song.Tick();
+			song.Play();
 		}
 
 		private void onVerseBegin(object sender, string e)
@@ -121,13 +145,18 @@ namespace TempoTest
 
 		private void chickenDance_OnVerseBegin(object sender, string e)
 		{
+			Console.WriteLine(song.TotalTime);
 			begin = DateTime.Now;
+
+			if (OnDebugReceived != null)
+				OnDebugReceived.Invoke(this, "---");
 
 			if (ChickenDanceBegun != null)
 				ChickenDanceBegun.Invoke(null, EventArgs.Empty);
 		}
 		private void chickenDance_OnVerseEnd(object sender, string e)
 		{
+			Console.WriteLine(song.TotalTime);
 			var elapsed = DateTime.Now - begin;
 
 			// Spits out time elapsed for 4 repeats of the chicken dance routine.
